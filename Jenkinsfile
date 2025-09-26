@@ -1,8 +1,8 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Run the pipeline on the main node, which is the container itself
-    agent any 
+    // We use the 'any' agent for stages that don't need a specific tool (like Checkout)
+    agent any
     
     // Define environment variables for the pipeline
     environment {
@@ -17,17 +17,26 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout code from the SCM (uses the configuration defined in the Jenkins Job settings)
-                // The explicit 'git' step is generally redundant if 'Pipeline script from SCM' is used, 
-                // but kept for clarity on where the code comes from.
+                // Checkout code from the SCM (e.g., the GitHub repo that contains this Jenkinsfile)
                 git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
             }
         }
         
-        stage('Install & Test') { // Renamed for clarity, matching your log's intent
+        stage('Test') {
+            // Use the Node.js image as the build/test environment
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    args '-u root' // Use root user to prevent potential permission issues
+                }
+            }
             steps {
-                // Use the 'sh' step to execute shell commands
+                echo 'Running Node.js tests inside the node:20-alpine container...'
+                
+                // Install dependencies
                 sh 'npm --prefix app install'
+                
+                // Run the test script defined in package.json
                 sh 'npm --prefix app run test'
             }
         }
@@ -39,7 +48,7 @@ pipeline {
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
                 
-                // Build the Docker image (using the Dockerfile in the root context)
+                // Build the Docker image (uses the host's Docker daemon via docker.sock)
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
@@ -51,8 +60,10 @@ pipeline {
                     // Login to DockerHub
                     sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                     
-                    // Push the images
+                    // Push the tagged image
                     sh "docker push ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG}"
+                    
+                    // Push the 'latest' image
                     sh "docker push ${env.DOCKERHUB_REPO}:latest"
                 }
             }
