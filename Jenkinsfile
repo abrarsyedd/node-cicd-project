@@ -17,7 +17,7 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 // Checkout code from the SCM (e.g., the GitHub repo that contains this Jenkinsfile)
-                git branch: 'main', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
+                git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
             }
         }
         
