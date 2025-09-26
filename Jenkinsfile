@@ -68,10 +68,24 @@ pipeline {
         }
         
         // This stage is a placeholder for Deployment (e.g., to a cloud VM, Kubernetes, etc.)
-        stage('Deploy') {
+        tage('Deploy') {
             steps {
-                echo "Deployment step: Would deploy ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} here."
-                // Example: sh 'ssh user@yourserver "docker pull ${env.DOCKERHUB_REPO}:latest && docker-compose up -d"'
+                echo "Deployment step: Deploying ${env.DOCKERHUB_REPO}:latest..."
+                
+                // 1. Pull the new 'latest' image (Ensures we have the newest code locally)
+                sh "docker pull ${env.DOCKERHUB_REPO}:latest"
+
+                // 2. Stop the old running container (if it exists)
+                // The '|| true' allows the build to continue if the container doesn't exist yet
+                sh 'docker stop node-app-running || true'
+
+                // 3. Remove the stopped container
+                sh 'docker rm node-app-running || true'
+
+                // 4. Start the new container using the latest image
+                sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
+                
+                echo "Deployment complete. Application is running on port 3000."
             }
         }
     }
