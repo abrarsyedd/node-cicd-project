@@ -1,7 +1,6 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // We use the 'any' agent for stages that don't need a specific tool (like Checkout)
     agent any
     
     // Define environment variables for the pipeline
@@ -11,7 +10,8 @@ pipeline {
         // !!! REPLACE with your actual GitHub username
         GITHUB_USER = 'abrarsyedd'
         // Jenkins Secret Text credentials ID for DockerHub login (must be set in Jenkins!)
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048' // Set this ID in Jenkins Secrets
+        // This ID must point to a 'Username with password' credential
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' // Renamed the ID for clarity
     }
 
     stages {
@@ -23,20 +23,17 @@ pipeline {
         }
         
         stage('Test') {
-            // Use the Node.js image as the build/test environment
+            // Use the node:20-alpine image to run tests in a clean environment
             agent {
                 docker {
                     image 'node:20-alpine'
-                    args '-u root' // Use root user to prevent potential permission issues
+                    args '-u root' // Run as root to avoid permission issues during install/test
                 }
             }
             steps {
                 echo 'Running Node.js tests inside the node:20-alpine container...'
-                
-                // Install dependencies
+                // Run placeholder tests
                 sh 'npm --prefix app install'
-                
-                // Run the test script defined in package.json
                 sh 'npm --prefix app run test'
             }
         }
@@ -48,7 +45,7 @@ pipeline {
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
                 
-                // Build the Docker image (uses the host's Docker daemon via docker.sock)
+                // Build the Docker image
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
@@ -56,6 +53,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 // Use the withCredentials block to securely access DockerHub login
+                // Ensure you have configured a 'Username with password' credential in Jenkins
                 withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     // Login to DockerHub
                     sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
@@ -69,9 +67,11 @@ pipeline {
             }
         }
         
+        // This stage is a placeholder for Deployment (e.g., to a cloud VM, Kubernetes, etc.)
         stage('Deploy') {
             steps {
                 echo "Deployment step: Would deploy ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} here."
+                // Example: sh 'ssh user@yourserver "docker pull ${env.DOCKERHUB_REPO}:latest && docker-compose up -d"'
             }
         }
     }

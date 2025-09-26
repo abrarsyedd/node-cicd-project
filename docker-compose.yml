@@ -4,7 +4,7 @@ services:
   jenkins:
     # We will use the official Jenkins LTS Docker image
     image: jenkins/jenkins:lts
-    user: root
+    # user: root  <-- Removed 'user: root' to use the default jenkins user
     # Map container ports to host ports
     ports:
       - "8080:8080" # Jenkins web UI
