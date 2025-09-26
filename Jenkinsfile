@@ -3,6 +3,13 @@
 pipeline {
     agent any
 
+    // ADDED TRIGGERS BLOCK
+    triggers {
+        // Explicitly tells Jenkins to listen for GitHub PUSH events on this job
+        githubPush() 
+    }
+    // END OF ADDED TRIGGERS BLOCK
+
     environment {
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
         GITHUB_USER = 'abrarsyedd'
@@ -12,6 +19,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
+                // Ensure you are checking out the correct branch (main)
                 git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
             }
         }
@@ -52,13 +60,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo "Deployment step: Deploying ${env.DOCKERHUB_REPO}:latest..."
-
-                // The '|| true' allows the build to continue if the container doesn't exist yet
                 sh 'docker pull ${DOCKERHUB_REPO}:latest'
                 sh 'docker stop node-app-running || true'
                 sh 'docker rm node-app-running || true'
                 sh 'docker run -d -p 3000:3000 --name node-app-running ${DOCKERHUB_REPO}:latest'
-
                 echo "Deployment complete. Application is running on port 3000."
             }
         }
