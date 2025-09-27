@@ -1,6 +1,7 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
+    // Top-level agent runs the initial checkout and the final deployment steps.
     agent any 
 
     triggers {
@@ -17,23 +18,23 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 echo 'Checking out code using job SCM configuration...'
-                // CRITICAL FIX: Use checkout scm to ensure the repository configured 
-                // in the Jenkins job is properly checked out into the workspace.
+                // Uses the SCM configured in the job
                 checkout scm 
             }
         }
 
         stage('Test') {
-            agent {
-                label 'master' 
-            }
+            // FIX: Revert to 'agent any' to run on the default controller, 
+            // avoiding the "label 'master'" error.
+            agent any 
+            
             tools {
+                // This provisions the NodeJS tool named 'NodeJS_20'
                 nodejs 'NodeJS_20' 
             }
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                // The 'dir' command is now redundant but kept for robustness.
                 dir('.') {
                     sh 'pwd' // Verify directory
                     
@@ -49,8 +50,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Get commit hash for tagging
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
+                // Build the image using the host's Docker daemon via the mounted socket
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
