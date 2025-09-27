@@ -1,7 +1,7 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Top-level agent runs the initial checkout and the final deployment steps.
+    // Top-level agent runs all stages since the test stage uses 'agent any'
     agent any 
 
     triggers {
@@ -15,35 +15,29 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                echo 'Checking out code using job SCM configuration...'
-                // Uses the SCM configured in the job
-                checkout scm 
-            }
-        }
+        // REMOVED THE EXPLICIT 'Checkout Code' STAGE
+        // The repository is now checked out automatically by the Declarative Pipeline engine.
 
         stage('Test') {
-            // FIX: Revert to 'agent any' to run on the default controller, 
-            // avoiding the "label 'master'" error.
+            // FIX: Using 'agent any' to avoid master label errors.
             agent any 
             
             tools {
-                // This provisions the NodeJS tool named 'NodeJS_20'
+                // Relies on NodeJS_20 being configured in Global Tool Configuration
                 nodejs 'NodeJS_20' 
             }
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                dir('.') {
-                    sh 'pwd' // Verify directory
-                    
-                    // 1. Install dependencies
-                    sh 'npm install'  
-                    
-                    // 2. Run the test script
-                    sh 'npm run test' 
-                }
+                // CRITICAL FIX: The workspace should now be correctly set by the tool block.
+                // Running pwd to confirm the directory is correct: /var/jenkins_home/workspace/node-cicd-project
+                sh 'pwd' 
+                
+                // 1. Install dependencies
+                sh 'npm install'  
+                
+                // 2. Run the test script
+                sh 'npm run test' 
             }
         }
 
