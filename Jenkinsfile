@@ -26,15 +26,16 @@ pipeline {
                 label 'master' 
             }
             tools {
+                // IMPORTANT: This tool name MUST be configured in Manage Jenkins -> Global Tool Configuration
                 nodejs 'NodeJS_20' 
             }
             steps {
-                echo 'Running Node.js tests in workspace directory...'
+                echo 'Running Node.js tests in the correct Jenkins workspace...'
                 
-                // CRITICAL FIX: Explicitly change directory to the current workspace ('.')
-                // This ensures npm looks for package.json in the right place.
-                dir('.') {
-                    sh 'pwd' // Added for debugging: verify the directory is the workspace
+                // CRITICAL FIX: Use the 'dir' step with the Jenkins environment variable 
+                // to force all shell commands to run inside the correct code location.
+                dir("${WORKSPACE}") {
+                    sh 'pwd' // Verify: This should output /var/jenkins_home/workspace/your-job-name
                     
                     // 1. Install dependencies (in the root)
                     sh 'npm install'  
@@ -50,6 +51,7 @@ pipeline {
                 script {
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
+                // Docker build command runs in the workspace context after Checkout
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
