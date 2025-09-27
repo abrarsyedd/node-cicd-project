@@ -1,8 +1,6 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Top-level agent runs the initial checkout and final deployment steps.
-    // This allows the Git and Docker commands to run on the primary Jenkins environment.
     agent any 
 
     triggers {
@@ -18,27 +16,31 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Ensure correct repo and branch are explicitly checked out
-                git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
+                echo 'Checking out code using job SCM configuration...'
+                // CRITICAL FIX: Use checkout scm to ensure the repository configured 
+                // in the Jenkins job is properly checked out into the workspace.
+                checkout scm 
             }
         }
 
         stage('Test') {
-            // FIX: Using 'agent any' to resolve the 'label master' scheduling error.
-            // This runs on the built-in controller, which is the only agent.
-            agent any 
-            
+            agent {
+                label 'master' 
+            }
             tools {
-                // This ensures the NodeJS_20 tool is prepared and available for the steps.
                 nodejs 'NodeJS_20' 
             }
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                // Ensure commands run within the workspace where package.json is located.
+                // The 'dir' command is now redundant but kept for robustness.
                 dir('.') {
-                    sh 'pwd' // Verify current directory
+                    sh 'pwd' // Verify directory
+                    
+                    // 1. Install dependencies
                     sh 'npm install'  
+                    
+                    // 2. Run the test script
                     sh 'npm run test' 
                 }
             }
