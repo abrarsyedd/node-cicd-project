@@ -5,42 +5,39 @@ pipeline {
     agent any 
 
     triggers {
-        // Automatically trigger on GitHub PUSH events
         githubPush() 
     }
 
     environment {
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
         GITHUB_USER = 'abrarsyedd'
-        // This MUST match the ID of the Credentials configured in Jenkins UI
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' 
     }
 
     stages {
-        // FIX: REMOVED 'Checkout Code' stage. Rely on initial SCM checkout.
-
+        // Rely on the initial SCM checkout
+        
         stage('Test') {
-            // CRITICAL FIX: Removed 'agent any' from the stage. 
-            // This forces the stage to run in the main workspace 
-            // (/var/jenkins_home/workspace/node-cicd-project)
-            // which contains the code checked out by the SCM block.
-            
-            tools {
-                // Must be configured in Global Tool Configuration
-                nodejs 'NodeJS_20' 
-            }
             steps {
-                echo 'Running Node.js tests in workspace directory...'
+                echo 'Running Node.js tests in workspace directory (Forced context)...'
                 
-                // The 'dir' command is no longer strictly necessary but kept for safety.
-                dir('.') {
-                    sh 'pwd' 
+                // CRITICAL FIX: Use the 'tool' and 'dir' directives within a 'script' block 
+                // to explicitly force the commands into the main workspace and Node environment.
+                script {
+                    // 1. Explicitly set up the NodeJS environment using the configured tool
+                    def nodeHome = tool 'NodeJS_20'
+                    env.PATH = "${nodeHome}/bin:${env.PATH}"
                     
-                    // 1. Install dependencies
-                    sh 'npm install'  
-                    
-                    // 2. Run the test script
-                    sh 'npm run test' 
+                    // 2. Execute commands in the main workspace directory
+                    dir (pwd()) { // Ensure we are in the main workspace path
+                        sh 'pwd' 
+                        
+                        // 3. Install dependencies
+                        sh 'npm install'  
+                        
+                        // 4. Run the test script
+                        sh 'npm run test' 
+                    }
                 }
             }
         }
@@ -48,10 +45,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Get commit hash for tagging
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
-                // Build the image using the host's Docker daemon via the mounted socket
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
