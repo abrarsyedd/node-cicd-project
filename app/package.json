@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Tests passed (placeholder)\""
+    "test": "echo \"--- Running CI Tests --- \" && echo \"Tests passed (placeholder for Mocha/Jest)\"",
+    "build": "echo \"--- Build step: Skipping for this project, but usually runs Babel/Webpack ---\""
   },
   "author": "",
   "license": "ISC",
