@@ -1,40 +1,38 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // CRITICAL FIX: Keep agent 'any' ONLY at the top level
+    // Top-level agent runs all stages since there are no specialized Docker agents
     agent any 
 
     triggers {
+        // Automatically trigger on GitHub PUSH events
         githubPush() 
     }
 
     environment {
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
         GITHUB_USER = 'abrarsyedd'
+        // This MUST match the ID of the Credentials configured in Jenkins UI
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' 
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                echo 'Checking out code using job SCM configuration...'
-                // Ensure the initial checkout is complete and populates the workspace
-                checkout scm 
-            }
-        }
+        // FIX: The 'Checkout Code' stage has been REMOVED.
+        // Jenkins automatically performs the checkout based on the job configuration 
+        // before the first stage. We rely on that.
 
         stage('Test') {
-            // CRITICAL FIX: Remove 'agent any' from this stage.
-            // This forces the stage to use the top-level agent (and workspace), 
-            // avoiding the problematic second checkout and the '@2' suffix workspace.
+            // FIX: Using 'agent any' is correct to run on the controller.
+            agent any 
             
             tools {
+                // Must be configured in Global Tool Configuration
                 nodejs 'NodeJS_20' 
             }
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                // dir is kept but should now be running in the correct location
+                // CRITICAL ASSUMPTION: package.json is in the root of the workspace.
                 dir('.') {
                     sh 'pwd' 
                     
@@ -50,8 +48,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+                    // Get commit hash for tagging
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
+                // Build the image using the host's Docker daemon via the mounted socket
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
