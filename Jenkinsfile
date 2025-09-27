@@ -1,7 +1,7 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Top-level agent runs all stages since the test stage uses 'agent any'
+    // CRITICAL FIX: Keep agent 'any' ONLY at the top level
     agent any 
 
     triggers {
@@ -15,39 +15,43 @@ pipeline {
     }
 
     stages {
-        // REMOVED THE EXPLICIT 'Checkout Code' STAGE
-        // The repository is now checked out automatically by the Declarative Pipeline engine.
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out code using job SCM configuration...'
+                // Ensure the initial checkout is complete and populates the workspace
+                checkout scm 
+            }
+        }
 
         stage('Test') {
-            // FIX: Using 'agent any' to avoid master label errors.
-            agent any 
+            // CRITICAL FIX: Remove 'agent any' from this stage.
+            // This forces the stage to use the top-level agent (and workspace), 
+            // avoiding the problematic second checkout and the '@2' suffix workspace.
             
             tools {
-                // Relies on NodeJS_20 being configured in Global Tool Configuration
                 nodejs 'NodeJS_20' 
             }
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                // CRITICAL FIX: The workspace should now be correctly set by the tool block.
-                // Running pwd to confirm the directory is correct: /var/jenkins_home/workspace/node-cicd-project
-                sh 'pwd' 
-                
-                // 1. Install dependencies
-                sh 'npm install'  
-                
-                // 2. Run the test script
-                sh 'npm run test' 
+                // dir is kept but should now be running in the correct location
+                dir('.') {
+                    sh 'pwd' 
+                    
+                    // 1. Install dependencies
+                    sh 'npm install'  
+                    
+                    // 2. Run the test script
+                    sh 'npm run test' 
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Get commit hash for tagging
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
-                // Build the image using the host's Docker daemon via the mounted socket
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
