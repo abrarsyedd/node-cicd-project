@@ -1,7 +1,7 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Top-level agent runs all stages since there are no specialized Docker agents
+    // Top-level agent runs all stages
     agent any 
 
     triggers {
@@ -17,13 +17,13 @@ pipeline {
     }
 
     stages {
-        // FIX: The 'Checkout Code' stage has been REMOVED.
-        // Jenkins automatically performs the checkout based on the job configuration 
-        // before the first stage. We rely on that.
+        // FIX: REMOVED 'Checkout Code' stage. Rely on initial SCM checkout.
 
         stage('Test') {
-            // FIX: Using 'agent any' is correct to run on the controller.
-            agent any 
+            // CRITICAL FIX: Removed 'agent any' from the stage. 
+            // This forces the stage to run in the main workspace 
+            // (/var/jenkins_home/workspace/node-cicd-project)
+            // which contains the code checked out by the SCM block.
             
             tools {
                 // Must be configured in Global Tool Configuration
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 echo 'Running Node.js tests in workspace directory...'
                 
-                // CRITICAL ASSUMPTION: package.json is in the root of the workspace.
+                // The 'dir' command is no longer strictly necessary but kept for safety.
                 dir('.') {
                     sh 'pwd' 
                     
