@@ -1,44 +1,32 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    // Top-level agent runs all stages
-    agent any 
-
-    triggers {
-        githubPush() 
-    }
+    agent any
 
     environment {
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
         GITHUB_USER = 'abrarsyedd'
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' 
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up'
     }
 
     stages {
-        // Rely on the initial SCM checkout
-        
-        stage('Test') {
+        stage('Checkout Code') {
             steps {
-                echo 'Running Node.js tests in workspace directory (Forced context)...'
-                
-                // CRITICAL FIX: Use the 'tool' and 'dir' directives within a 'script' block 
-                // to explicitly force the commands into the main workspace and Node environment.
-                script {
-                    // 1. Explicitly set up the NodeJS environment using the configured tool
-                    def nodeHome = tool 'NodeJS_20'
-                    env.PATH = "${nodeHome}/bin:${env.PATH}"
-                    
-                    // 2. Execute commands in the main workspace directory
-                    dir (pwd()) { // Ensure we are in the main workspace path
-                        sh 'pwd' 
-                        
-                        // 3. Install dependencies
-                        sh 'npm install'  
-                        
-                        // 4. Run the test script
-                        sh 'npm run test' 
-                    }
+                git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/node-cicd-project.git"
+            }
+        }
+
+        stage('Test') {
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                    args '-u root'
                 }
+            }
+            steps {
+                echo 'Running Node.js tests inside the node:20-alpine container...'
+                sh 'npm --prefix app install'
+                sh 'npm --prefix app run test'
             }
         }
 
@@ -64,11 +52,14 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo "Deployment step: Deploying ${env.DOCKERHUB_REPO}:latest..."
-                sh "docker pull ${env.DOCKERHUB_REPO}:latest" 
+
+                // The '|| true' allows the build to continue if the container doesn't exist yet
+                sh 'docker pull ${DOCKERHUB_REPO}:latest'
                 sh 'docker stop node-app-running || true'
                 sh 'docker rm node-app-running || true'
-                sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
-                echo "Deployment complete. Application is running on http://<EC2_PUBLIC_IP>:3000"
+                sh 'docker run -d -p 3000:3000 --name node-app-running ${DOCKERHUB_REPO}:latest'
+
+                echo "Deployment complete. Application is running on port 3000."
             }
         }
     }
