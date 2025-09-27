@@ -1,6 +1,8 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
+    // Top-level agent runs the initial checkout and final deployment steps.
+    // This allows the Git and Docker commands to run on the primary Jenkins environment.
     agent any 
 
     triggers {
@@ -22,25 +24,21 @@ pipeline {
         }
 
         stage('Test') {
-            agent {
-                label 'master' 
-            }
+            // FIX: Using 'agent any' to resolve the 'label master' scheduling error.
+            // This runs on the built-in controller, which is the only agent.
+            agent any 
+            
             tools {
-                // IMPORTANT: This tool name MUST be configured in Manage Jenkins -> Global Tool Configuration
+                // This ensures the NodeJS_20 tool is prepared and available for the steps.
                 nodejs 'NodeJS_20' 
             }
             steps {
-                echo 'Running Node.js tests in the correct Jenkins workspace...'
+                echo 'Running Node.js tests in workspace directory...'
                 
-                // CRITICAL FIX: Use the 'dir' step with the Jenkins environment variable 
-                // to force all shell commands to run inside the correct code location.
-                dir("${WORKSPACE}") {
-                    sh 'pwd' // Verify: This should output /var/jenkins_home/workspace/your-job-name
-                    
-                    // 1. Install dependencies (in the root)
+                // Ensure commands run within the workspace where package.json is located.
+                dir('.') {
+                    sh 'pwd' // Verify current directory
                     sh 'npm install'  
-                    
-                    // 2. Run the test script
                     sh 'npm run test' 
                 }
             }
@@ -51,7 +49,6 @@ pipeline {
                 script {
                     env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
                 }
-                // Docker build command runs in the workspace context after Checkout
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
