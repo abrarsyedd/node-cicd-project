@@ -1,11 +1,17 @@
+// app/index.js
 const express = require('express');
 const app = express();
-const port = 3000;
 
+// Use environment variables from Dockerfile
+const HOST = process.env.HOST || '0.0.0.0'; 
+const PORT = process.env.PORT || 3000;
+
+// Simple route handler
 app.get('/', (req, res) => {
-  res.send('Hello from the Node.js App! This was built with CI/CD, Thank you');
+  res.send('<h1>Node.js CI/CD App is Running!</h1>');
 });
 
-app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+// Start the server
+app.listen(PORT, HOST, () => {
+  console.log(`Server is listening on http://${HOST}:${PORT}`);
 });
