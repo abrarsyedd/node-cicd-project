@@ -57,7 +57,7 @@ pipeline {
                 sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
-                # This port mapping (3000:3000) is correct for accessing the app via the EC2 public IP.
+                // This comment now uses the correct Groovy syntax (//)
                 sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
                 echo "Deployment complete. Application is running on port 3000."
             }
