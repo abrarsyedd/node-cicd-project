@@ -17,9 +17,11 @@ pipeline {
         }
 
         stage('Test') {
+            // Run tests inside docker container with proper Docker integration
             agent {
                 docker {
                     image 'node:20-alpine'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.docker:/root/.docker'
                 }
             }
             steps {
