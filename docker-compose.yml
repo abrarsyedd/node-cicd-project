@@ -1,17 +1,17 @@
 version: '3.8'
-
 services:
+  # Jenkins Controller Service
   jenkins:
-    build:
+    build: 
       context: .
-      args:
-        DOCKER_GID: 988
-    user: jenkins
+    # Use 'root' to guarantee permission to access /var/run/docker.sock.
+    user: root 
     ports:
       - "8080:8080"
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
+      # Mount the Docker socket
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
