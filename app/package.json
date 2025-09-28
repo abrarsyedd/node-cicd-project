@@ -1,14 +1,15 @@
 {
-  "name": "app",
+  "name": "node-test-app",
   "version": "1.0.0",
+  "description": "A simple Node.js test app for CI/CD",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Running dummy tests...\" && exit 0"
+    "start": "node index.js",
+    "test": "echo \"Tests passed (placeholder)\""
   },
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^4.18.2" // <-- ADD THIS LINE IF MISSING
+    "express": "^4.18.2"
   }
-}
+}}
