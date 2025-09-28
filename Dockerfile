@@ -22,14 +22,11 @@ WORKDIR /usr/src/app
 COPY --from=build /usr/src/app .
 
 # Expose the application port (3000)
-# This is documentation, but it helps Docker networking
 EXPOSE 3000
 
 # Set environment variable to ensure Node.js listens on all interfaces (0.0.0.0)
-# This is often the fix if the app listens only on 127.0.0.1 by default.
 ENV HOST=0.0.0.0 
 ENV PORT=3000
 
 # Command to run the application
-# Assuming your main script is index.js inside the 'app' directory
 CMD [ "node", "index.js" ]
