@@ -20,7 +20,6 @@ WORKDIR /usr/src/app
 # Copy dependencies from the build stage
 COPY --from=build /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/index.js .
-COPY --from=build /usr/src/app/package.json . # Add package.json for completeness
 
 # Expose port and define the command to run the app
 EXPOSE 3000
