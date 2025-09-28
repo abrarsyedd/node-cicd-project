@@ -3,18 +3,10 @@ pipeline {
 
     environment {
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
-        GITHUB_REPO_URL = 'https://github.com/abrarsyedd/node-cicd-project.git'
-        GITHUB_BRANCH = 'master'
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up'
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: "${GITHUB_BRANCH}", url: "${GITHUB_REPO_URL}"
-            }
-        }
-
         stage('Test') {
             agent {
                 docker {
