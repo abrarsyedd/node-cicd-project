@@ -1,14 +1,11 @@
-// Jenkinsfile (Declarative Pipeline)
-
 pipeline {
     agent any
 
     environment {
-        // !! UPDATE THESE VALUES !!
-        DOCKERHUB_REPO = 'syed048/node-ci-cd-app' 
-        GITHUB_USER = 'abrarsyedd' 
-        GITHUB_BRANCH = 'master' 
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' 
+        DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
+        GITHUB_USER = 'abrarsyedd'
+        GITHUB_BRANCH = 'master'
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up'
     }
 
     stages {
@@ -20,7 +17,6 @@ pipeline {
         }
 
         stage('Test') {
-            // This 'docker' block will now succeed because the container is running as root.
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -54,12 +50,12 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo "Deployment step: Deploying ${env.DOCKERHUB_REPO}:latest..."
+                echo "Deploying ${env.DOCKERHUB_REPO}:latest..."
                 sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
                 sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
-                echo "Deployment complete. Application is running on port 3000."
+                echo "Deployment complete. App is live on port 3000."
             }
         }
     }
