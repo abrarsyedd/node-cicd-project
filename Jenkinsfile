@@ -1,11 +1,15 @@
+// Jenkinsfile (Declarative Pipeline)
+
 pipeline {
+    // Agent 'any' means the build runs on the Jenkins controller (where SCM checkout happens)
     agent any
 
     environment {
-        DOCKERHUB_REPO = 'syed048/node-ci-cd-app'
-        GITHUB_USER = 'abrarsyedd'
-        GITHUB_BRANCH = 'master'
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up'
+        // !! UPDATE THESE VALUES !!
+        DOCKERHUB_REPO = 'syed048/node-ci-cd-app' // Your Docker Hub username/repo
+        GITHUB_USER = 'abrarsyedd' // Your GitHub username
+        GITHUB_BRANCH = 'master' // Explicit branch
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' // Your Jenkins credentials ID for Docker Hub
     }
 
     stages {
@@ -17,11 +21,10 @@ pipeline {
         }
 
         stage('Test') {
-            // Run tests inside docker container with proper Docker integration
+            // This 'docker' block relies on the host's Docker daemon access, which is now fixed by the GID configuration.
             agent {
                 docker {
                     image 'node:20-alpine'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.docker:/root/.docker'
                 }
             }
             steps {
