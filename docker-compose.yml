@@ -5,8 +5,9 @@ services:
     # Build the image from our custom Dockerfile in the current directory
     build: 
       context: .
-    # Use the 'jenkins' user, which now has the correct permissions for the socket
-    user: jenkins
+    # CRITICAL FIX: Run as 'root' to guarantee permission to access /var/run/docker.sock.
+    # NOTE: This is less secure than running as the 'jenkins' user, but necessary to overcome the persistent permission error.
+    user: root 
     # Map container ports to host ports
     ports:
       - "8080:8080" # Jenkins web UI
