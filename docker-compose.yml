@@ -3,9 +3,12 @@ services:
   # Jenkins Controller Service
   jenkins:
     # Build the image from our custom Dockerfile in the current directory
-    build: .
-    # Revert to the default 'jenkins' user for better security, 
-    # as we added this user to the 'docker' group in the Dockerfile
+    build: 
+      context: .
+      # IMPORTANT: Replace 998 with the actual GID of the 'docker' group on your EC2 host.
+      args:
+        DOCKER_GID: YOUR_HOST_DOCKER_GID
+    # We can now safely use the 'jenkins' user because it has been added to the correct group inside the image
     user: jenkins
     # Map container ports to host ports
     ports:

@@ -27,7 +27,6 @@ pipeline {
             agent {
                 docker {
                     image 'node:20-alpine'
-                    // Removed 'args -u root' - less secure and typically not needed
                 }
             }
             steps {
@@ -42,11 +41,9 @@ pipeline {
             steps {
                 script {
                     // Get the short Git commit hash for the image tag
-                    // This now works because 'git' is installed in the custom Jenkins image
                     env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
                 }
-                // The '.' references the current workspace 
-                // This now works because 'docker' CLI is installed in the custom Jenkins image
+                // This now works because 'docker' CLI is accessible
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
