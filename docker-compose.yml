@@ -1,26 +1,17 @@
 version: '3.8'
 services:
-  # Jenkins Controller Service
   jenkins:
-    # Build the image from our custom Dockerfile in the current directory
-    build: 
+    build:
       context: .
-      # CRITICAL: Replace 998 with the actual GID of the 'docker' group on your EC2 host.
       args:
-        DOCKER_GID: YOUR_HOST_DOCKER_GID
-    # Use the 'jenkins' user, which now has the correct permissions for the socket
+        DOCKER_GID: 988 # Your EC2 Docker group GID
     user: jenkins
-    # Map container ports to host ports
     ports:
-      - "8080:8080" # Jenkins web UI
-      - "50000:50000" # Jenkins agent communication
-    # Mount local directories for persistence and Docker access
+      - "8080:8080"
+      - "50000:50000"
     volumes:
-      # Persistent storage for Jenkins data
       - jenkins_home:/var/jenkins_home
-      # Mount the Docker socket for Jenkins to run Docker commands
       - /var/run/docker.sock:/var/run/docker.sock
-    # Set necessary environment variables for Docker operations within Jenkins
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
     container_name: jenkins-server
@@ -28,3 +19,4 @@ services:
 
 volumes:
   jenkins_home:
+
