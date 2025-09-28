@@ -5,10 +5,10 @@ services:
     # Build the image from our custom Dockerfile in the current directory
     build: 
       context: .
-      # IMPORTANT: Replace 998 with the actual GID of the 'docker' group on your EC2 host.
+      # IMPORTANT: Replace this with the actual GID of the 'docker' group on your EC2 host.
       args:
         DOCKER_GID: YOUR_HOST_DOCKER_GID
-    # We can now safely use the 'jenkins' user because it has been added to the correct group inside the image
+    # Use the 'jenkins' user now that it has been added to the correct group inside the image
     user: jenkins
     # Map container ports to host ports
     ports:
