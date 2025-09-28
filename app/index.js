@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Simple route handler
 app.get('/', (req, res) => {
-  res.send('<h1>Node.js CI/CD App is Running!</h1>');
+  res.send('<h1>Node.js CI/CD App is Running! Thank you.</h1>');
 });
 
 // Start the server
