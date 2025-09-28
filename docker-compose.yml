@@ -1,15 +1,27 @@
-jenkins:
-  image: jenkins/jenkins:lts
-  user: root
-  ports:
-    - "8080:8080"
-    - "50000:50000"
-  volumes:
-    - jenkins_home:/var/jenkins_home
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    - DOCKER_HOST=unix:///var/run/docker.sock
-  container_name: jenkins-server
-  restart: unless-stopped
-  command: bash -c "apt-get update && apt-get install -y git && /sbin/tini -- /usr/local/bin/jenkins.sh"
+version: '3.8'
+services:
+  # Jenkins Controller Service
+  jenkins:
+    # Build the image from our custom Dockerfile in the current directory
+    build: .
+    # Revert to the default 'jenkins' user for better security, 
+    # as we added this user to the 'docker' group in the Dockerfile
+    user: jenkins
+    # Map container ports to host ports
+    ports:
+      - "8080:8080" # Jenkins web UI
+      - "50000:50000" # Jenkins agent communication
+    # Mount local directories for persistence and Docker access
+    volumes:
+      # Persistent storage for Jenkins data
+      - jenkins_home:/var/jenkins_home
+      # Mount the Docker socket for Jenkins to run Docker commands
+      - /var/run/docker.sock:/var/run/docker.sock
+    # Set necessary environment variables for Docker operations within Jenkins
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    container_name: jenkins-server
+    restart: unless-stopped
 
+volumes:
+  jenkins_home:

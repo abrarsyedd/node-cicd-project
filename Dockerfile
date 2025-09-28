@@ -1,26 +1,20 @@
-# Stage 1: Build Stage (using a node base image)
-FROM node:20-alpine AS build
+# Use the official Jenkins LTS image as the base
+FROM jenkins/jenkins:lts
 
-# Create app directory
-WORKDIR /usr/src/app
+# Switch to root user to install packages
+USER root
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY app/package*.json ./
-RUN npm install
+# Install required tools: git, and the Docker CLI
+# The Docker CLI is needed for the 'Build Docker Image' and 'Deploy' stages
+RUN apt-get update \
+    && apt-get install -y git default-jdk docker.io \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy application source code
-COPY app/ .
+# Add the 'jenkins' user to the 'docker' group
+# This is necessary because the jenkins user inside the container needs permissions
+# to access the mounted /var/run/docker.sock (which the user 'root' had in your original compose)
+# We will revert to the 'jenkins' user instead of 'root' for better security practices.
+RUN usermod -aG docker jenkins
 
-# Stage 2: Production Stage (using a smaller base image for production)
-FROM node:20-alpine
-
-WORKDIR /usr/src/app
-
-# Copy dependencies from the build stage
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/index.js .
-
-# Expose port and define the command to run the app
-EXPOSE 3000
-CMD [ "node", "index.js" ]
+# Switch back to the jenkins user
+USER jenkins
