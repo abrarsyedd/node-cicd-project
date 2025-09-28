@@ -1,7 +1,32 @@
 # Dockerfile
-FROM jenkins/jenkins:lts
+# Stage 1: Build the Node.js application
+FROM node:20-alpine AS build
 
-USER root
-RUN apt-get update && \
-    apt-get install -y git docker.io \
-    && rm -rf /var/lib/apt/lists/*
+# Create app directory
+WORKDIR /usr/src/app
+
+# Install dependencies (use separate steps to leverage Docker cache)
+COPY app/package*.json ./
+RUN npm install
+
+# Copy application source code
+COPY app/ .
+
+# Stage 2: Final minimal image
+FROM node:20-alpine
+
+# Set application directory
+WORKDIR /usr/src/app
+
+# Copy built code from the build stage (only what's needed for runtime)
+COPY --from=build /usr/src/app .
+
+# Expose the application port (3000)
+EXPOSE 3000
+
+# Set environment variable to ensure Node.js listens on all interfaces (0.0.0.0)
+ENV HOST=0.0.0.0 
+ENV PORT=3000
+
+# Command to run the application
+CMD [ "node", "index.js" ]
