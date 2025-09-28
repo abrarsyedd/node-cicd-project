@@ -1,25 +1,23 @@
 // Jenkinsfile (Declarative Pipeline)
 
 pipeline {
-    agent any
+    // Top-level agent set to 'any' to use the main Jenkins executor (on the EC2 host)
+    agent any 
 
     environment {
         // !! UPDATE THESE VALUES !!
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app' // Your Docker Hub username/repo
         GITHUB_USER = 'abrarsyedd' // Your GitHub username
-        GITHUB_REPO_NAME = 'node-cicd-project' // Your GitHub repository name
+        GITHUB_BRANCH = 'master' // 💥 Added explicit branch variable 💥
         DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' // Your Jenkins credentials ID for Docker Hub
     }
 
-    stages {
-        stage('Checkout Code') {
-            steps {
-                // Ensure the repository URL is correct
-                git branch: 'master', url: "https://github.com/${env.GITHUB_USER}/${env.GITHUB_REPO_NAME}.git"
-            }
-        }
+    // 💥 The code is checked out by the Jenkins job SCM configuration 
+    // before the pipeline begins. No need for a separate checkout stage.
 
+    stages {
         stage('Test') {
+            // Run this stage inside a clean Node.js container
             agent {
                 docker {
                     image 'node:20-alpine'
@@ -37,9 +35,10 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    env.IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    // Get the short Git commit hash for the image tag
+                    env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
                 }
-                // The 'app' directory is the root of the application for the Docker build
+                // The '.' references the current workspace (where the code was checked out)
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
@@ -58,7 +57,7 @@ pipeline {
             steps {
                 echo "Deployment step: Deploying ${env.DOCKERHUB_REPO}:latest..."
 
-                // Use double quotes for shell variable interpolation in 'sh' step
+                // Pull, stop, remove old container, and run new one
                 sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
