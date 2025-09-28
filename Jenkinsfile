@@ -4,7 +4,6 @@ pipeline {
     agent any
 
     environment {
-        // !! UPDATE THESE VALUES !!
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app' 
         GITHUB_USER = 'abrarsyedd' 
         GITHUB_BRANCH = 'master' 
@@ -12,19 +11,10 @@ pipeline {
     }
 
     stages {
-        stage('Prepare Workspace') {
-            steps {
-                echo "Workspace contents after SCM checkout:"
-                sh 'ls -a'
-            }
-        }
+        stage('Prepare Workspace') { steps { echo "Workspace contents after SCM checkout:"; sh 'ls -a' } }
 
         stage('Test') {
-            agent {
-                docker {
-                    image 'node:20-alpine'
-                }
-            }
+            agent { docker { image 'node:20-alpine' } }
             steps {
                 echo 'Running Node.js tests inside the node:20-alpine container...'
                 sh 'npm --prefix app install' 
@@ -34,9 +24,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
-                }
+                script { env.IMAGE_TAG = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim() }
                 sh "docker build -t ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG} -t ${env.DOCKERHUB_REPO}:latest ."
             }
         }
@@ -57,7 +45,6 @@ pipeline {
                 sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
-                // This comment now uses the correct Groovy syntax (//)
                 sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
                 echo "Deployment complete. Application is running on port 3000."
             }
