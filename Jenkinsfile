@@ -20,6 +20,7 @@ pipeline {
             agent {
                 docker {
                     image 'node:20-alpine'
+                    args '-u root' // Run as root to avoid permission issues
                 }
             }
             steps {
