@@ -7,12 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'master', url: 'https://github.com/abrarsyedd/node-cicd-project.git'
-            }
-        }
-
         stage('Test') {
             agent {
                 docker {
@@ -21,6 +15,7 @@ pipeline {
                 }
             }
             steps {
+                echo 'Running Node.js tests...'
                 sh 'npm --prefix app install'
                 sh 'npm --prefix app run test'
             }
@@ -37,8 +32,8 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID, 
-                                                 passwordVariable: 'DOCKER_PASSWORD', 
+                withCredentials([usernamePassword(credentialsId: env.DOCKERHUB_CREDENTIALS_ID,
+                                                 passwordVariable: 'DOCKER_PASSWORD',
                                                  usernameVariable: 'DOCKER_USERNAME')]) {
                     sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin"
                     sh "docker push ${env.DOCKERHUB_REPO}:${env.IMAGE_TAG}"
@@ -49,6 +44,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
+                sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
                 sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
