@@ -27,8 +27,8 @@ pipeline {
             }
             steps {
                 echo 'Running Node.js tests inside the node:20-alpine container...'
-                sh 'npm --prefix app install'
-                sh 'npm --prefix app run test' // This will now succeed with the updated package.json
+                sh 'npm --prefix app install' // This will now succeed after fixing package.json
+                sh 'npm --prefix app run test'
             }
         }
 
