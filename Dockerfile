@@ -2,7 +2,8 @@
 FROM jenkins/jenkins:lts
 
 # Default GID for 'docker' group in many distros. You MUST override this at build time.
-ARG DOCKER_GID=988 
+# Assuming you found and used the correct GID (e.g., 998)
+ARG DOCKER_GID=998 
 
 USER root
 
@@ -11,9 +12,7 @@ RUN apt-get update && \
     apt-get install -y git docker.io && \
     rm -rf /var/lib/apt/lists/*
 
-# Fix for "permission denied"
-# 1. Create a group named 'docker' inside the container using the host's GID
-# 2. Add the 'jenkins' user to this new 'docker' group
+# Fix for "permission denied" by creating the 'docker' group with the host's GID
 RUN groupadd -g $DOCKER_GID docker || true && \
     usermod -aG docker jenkins
 
