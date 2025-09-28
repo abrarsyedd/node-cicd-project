@@ -16,4 +16,3 @@ RUN groupadd -g $DOCKER_GID docker || true && \
 
 # Switch back to jenkins user
 USER jenkins
-
