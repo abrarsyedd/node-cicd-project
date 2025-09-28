@@ -1,16 +1,17 @@
 FROM jenkins/jenkins:lts
 
-# Set ARG for host's Docker GID (set to 988 for your EC2 instance)
+# Use your EC2 Docker group GID
 ARG DOCKER_GID=988
 
+# Run as root for installation and user/group changes
 USER root
 
-# Install required tools
+# Install git and Docker CLI
 RUN apt-get update && \
     apt-get install -y git docker.io && \
     rm -rf /var/lib/apt/lists/*
 
-# Add 'jenkins' user to 'docker' group for Docker socket permissions
+# Create docker group with host GID and add jenkins user to it
 RUN groupadd -g $DOCKER_GID docker || true && \
     usermod -aG docker jenkins
 
