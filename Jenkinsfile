@@ -4,6 +4,7 @@ pipeline {
     agent any
 
     environment {
+        // !! UPDATE THESE VALUES !!
         DOCKERHUB_REPO = 'syed048/node-ci-cd-app' 
         GITHUB_USER = 'abrarsyedd' 
         GITHUB_BRANCH = 'master' 
@@ -14,7 +15,11 @@ pipeline {
         stage('Prepare Workspace') { steps { echo "Workspace contents after SCM checkout:"; sh 'ls -a' } }
 
         stage('Test') {
-            agent { docker { image 'node:20-alpine' } }
+            agent {
+                docker {
+                    image 'node:20-alpine'
+                }
+            }
             steps {
                 echo 'Running Node.js tests inside the node:20-alpine container...'
                 sh 'npm --prefix app install' 
