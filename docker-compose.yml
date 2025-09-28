@@ -4,14 +4,14 @@ services:
   jenkins:
     build: 
       context: .
-    # Use 'root' to guarantee permission to access /var/run/docker.sock.
+    # Runs as 'root' to guarantee permission to access /var/run/docker.sock.
     user: root 
+    # This port mapping requires 8080 to be free on the EC2 host.
     ports:
-      - "8080:8080"
+      - "8080:8080" 
       - "50000:50000"
     volumes:
       - jenkins_home:/var/jenkins_home
-      # Mount the Docker socket
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
