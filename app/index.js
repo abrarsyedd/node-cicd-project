@@ -1,11 +1,13 @@
 const express = require('express');
 const app = express();
-const port = 3000;
+// Use the HOST environment variable set in the Dockerfile
+const HOST = process.env.HOST || '0.0.0.0'; 
+const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Hello from the Node.js App! This was built with CI/CD, Thank you');
+  res.send('Hello from Node CI/CD!');
 });
 
-app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Application listening at http://${HOST}:${PORT}`);
 });
