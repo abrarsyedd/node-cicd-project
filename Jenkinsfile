@@ -5,10 +5,10 @@ pipeline {
 
     environment {
         // !! UPDATE THESE VALUES !!
-        DOCKERHUB_REPO = 'syed048/node-ci-cd-app' // Your Docker Hub username/repo
-        GITHUB_USER = 'abrarsyedd' // Your GitHub username
-        GITHUB_BRANCH = 'master' // Explicit branch
-        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' // Your Jenkins credentials ID for Docker Hub
+        DOCKERHUB_REPO = 'syed048/node-ci-cd-app' 
+        GITHUB_USER = 'abrarsyedd' 
+        GITHUB_BRANCH = 'master' 
+        DOCKERHUB_CREDENTIALS_ID = 'dockerhub-syed048-up' 
     }
 
     stages {
@@ -27,7 +27,7 @@ pipeline {
             }
             steps {
                 echo 'Running Node.js tests inside the node:20-alpine container...'
-                sh 'npm --prefix app install' // This will now succeed after fixing package.json
+                sh 'npm --prefix app install' 
                 sh 'npm --prefix app run test'
             }
         }
@@ -57,6 +57,7 @@ pipeline {
                 sh "docker pull ${env.DOCKERHUB_REPO}:latest"
                 sh "docker stop node-app-running || true"
                 sh "docker rm node-app-running || true"
+                # This port mapping (3000:3000) is correct for accessing the app via the EC2 public IP.
                 sh "docker run -d -p 3000:3000 --name node-app-running ${env.DOCKERHUB_REPO}:latest"
                 echo "Deployment complete. Application is running on port 3000."
             }
